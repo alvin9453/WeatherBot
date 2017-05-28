@@ -1,4 +1,4 @@
-Line WeatherBot - 天氣小幫手
+LINE WeatherBot - 天氣小幫手
 ===============================
 
 
@@ -13,6 +13,8 @@ How to use
 可以透過[行動條碼](http://qr-official.line.me/L/YnDs0imc1c.png)尋找,或是Line ID : @mkj6578l
 
 找到這支bot後，就可以輸入城市名稱來查詢當日對應的小幫手資料啦！
+
+因為只是在練習，所以目前只有五個城市啦！
 
 Reference
 -----------
