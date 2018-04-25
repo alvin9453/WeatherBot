@@ -31,71 +31,57 @@ var bot = linebot({
 	channelAccessToken : '31WyXDhpzJueapzwRryhfbgC7geBnIV/eLkwTG9ltKutnNWHTlKFSMrvCrYSPW9bEKW1tJcZO3P8APGckeRJ0yca3UXToqO5kxgipSbBjgWXihxiU65L6egtAtUFu4M9xQwOCW7I9M4KygYjhAUsywdB04t89/1O/w1cDnyilFU='
 });
 
-var weather = [];
-var timer;
 
-//TimeToGetData();
-/*
-function TimeToGetData(){
-	clearTimeout(timer);
-	for( var x in areaToCode)
-		getData(x);
-	timer = setInterval(TimeToGetData, 1800000); // per 30 minutes
 
-}*/
-
-async function getData(area){
+function getData(area){
 	url = 'http://opendata.cwb.gov.tw/opendataapi?dataid=' + areaToCode[area] + '&authorizationkey=CWB-85A09E81-CAEE-4E25-8170-2D049F54968C';
-	request(url, function (error , response , body){
-		console.log('error:', error);
-	
-		var xmlDoc = libxmljs.parseXml(body);
+	var promise = new Promise((resolve,reject)=>{
+		request(url, function (error , response , body){
+			console.log('error:', error);
+		
+			var xmlDoc = libxmljs.parseXml(body);
 
-		var children = xmlDoc.root().childNodes();
-		var dataset = children[17].childNodes();
-		var parameterSet = dataset[5].childNodes();
-		if( area.search('基隆') != -1 ){  // 只有基隆的格式特別不一樣...
-			return parameterSet[7].text();
-		}
-		else{
-			return parameterSet[5].text();
-		}
+			var children = xmlDoc.root().childNodes();
+			var dataset = children[17].childNodes();
+			var parameterSet = dataset[5].childNodes();
+			if( area.search('基隆') != -1 ){  // 只有基隆的格式特別不一樣...
+				resolve(parameterSet[7].text());
+			}
+			else{
+				resolve(parameterSet[5].text());
+			}
 
+		});
 	});
+	return promise;
 };
 
 bot.on('message', function(event) {
 	if( event.message.type = 'text'){
-		var msg = event.message.text;
+		var city = event.message.text;
 		var replyMsg = '';
-		var flag = 0;
-		var sameWord = msg.search('臺');
+		var sameWord = city.search('臺');
 		if( sameWord != -1 )
-			msg = '台' + msg[1];
-		console.log(msg);
-		for( var x in areaToCode){
-			if( msg.search(x) != -1 ){
-				var city = x;
-				getData(areaToCode[city]).then(weatherData => {
+			city = '台' + city[1];
+		console.log(city);
+		if (city in areaToCode){
+				getData(city).then(weatherData => {
 					replyMsg = city + '天氣小幫手 : \n' + weatherData;	
-				}, rejectData =>{
-					replyMsg = city + '天氣小幫手 : \n 系統忙碌中...';	
+					event.reply(replyMsg).then(function(data){
+						console.log(replyMsg);
+					}).catch(function(error){
+						// error
+						console.log('Error in sending result...');
+					});
+				}, rejVal =>{
+					event.reply("系統忙碌中，請再試一次 :(");
+					console.log("Reject!!!");
 				});
-				flag = 1;
-				break;
-			}
-		}
-		
-		if ( flag == 0){
+				
+		}else{
 			replyMsg = '請輸入臺灣縣市名，如 : 基隆、台北、台中、南投、高雄...';
-		}
-
-		event.reply(replyMsg).then(function(data){
-			console.log(replyMsg);
-		}).catch(function(error){
-			// error
-			console.log('error...');
-		});
+			event.reply(replyMsg);
+		}		
 	}
 });
 
