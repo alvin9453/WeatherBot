@@ -34,17 +34,17 @@ var bot = linebot({
 var weather = [];
 var timer;
 
-TimeToGetData();
-
+//TimeToGetData();
+/*
 function TimeToGetData(){
 	clearTimeout(timer);
 	for( var x in areaToCode)
 		getData(x);
 	timer = setInterval(TimeToGetData, 1800000); // per 30 minutes
 
-}
+}*/
 
-function getData(area){
+async function getData(area){
 	url = 'http://opendata.cwb.gov.tw/opendataapi?dataid=' + areaToCode[area] + '&authorizationkey=CWB-85A09E81-CAEE-4E25-8170-2D049F54968C';
 	request(url, function (error , response , body){
 		console.log('error:', error);
@@ -55,11 +55,10 @@ function getData(area){
 		var dataset = children[17].childNodes();
 		var parameterSet = dataset[5].childNodes();
 		if( area.search('基隆') != -1 ){  // 只有基隆的格式特別不一樣...
-			weather['基隆'] = parameterSet[7].text();
-			console.log('K : ' + weather['基隆'])
+			return parameterSet[7].text();
 		}
 		else{
-			weather[area] = parameterSet[5].text();
+			return parameterSet[5].text();
 		}
 
 	});
@@ -77,7 +76,11 @@ bot.on('message', function(event) {
 		for( var x in areaToCode){
 			if( msg.search(x) != -1 ){
 				var city = x;
-				replyMsg = city + '天氣小幫手 : \n' + weather[city];
+				getData(areaToCode[city]).then(weatherData => {
+					replyMsg = city + '天氣小幫手 : \n' + weatherData;	
+				}, rejectData =>{
+					replyMsg = city + '天氣小幫手 : \n 系統忙碌中...';	
+				});
 				flag = 1;
 				break;
 			}
